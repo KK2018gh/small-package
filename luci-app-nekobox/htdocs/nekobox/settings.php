@@ -127,7 +127,7 @@ $uiVersion = getUiVersion();
                                 </div>
                                 <div class="text-center mt-2">
                                     <button class="btn btn-pink" id="checkCliverButton">🔍 检测版本</button>
-                                    <button class="btn btn-info" id="updateButton" title="更新到最新版本">🔄 更新版本</button>
+                                    <button class="btn btn-info" id="updateButton" title="更新到最新版本" onclick="showUpdateVersionModal()">🔄 更新版本</button>
                                 </div>
                             </div>
                         </div>
@@ -174,6 +174,32 @@ $uiVersion = getUiVersion();
             </tr>
         </tbody>
     </table>
+<div class="modal fade" id="updateVersionModal" tabindex="-1" aria-labelledby="updateVersionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateVersionModalLabel">选择更新版本语言</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="languageSelect">选择语言</label>
+                    <select id="languageSelect" class="form-select">
+                        <option value="cn">中文版</option>
+                        <option value="en">英文版</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmUpdateVersion()">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="mihomoVersionSelectionModal" tabindex="-1" aria-labelledby="mihomoVersionSelectionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -234,6 +260,8 @@ $uiVersion = getUiVersion();
                     <option value="v1.11.0-alpha.8">v1.11.0-alpha.8</option>
                     <option value="v1.11.0-alpha.9">v1.11.0-alpha.9</option>
                     <option value="v1.11.0-alpha.10">v1.11.0-alpha.10</option>
+                    <option value="v1.11.0-alpha.15">v1.11.0-alpha.15</option>
+                    <option value="v1.11.0-alpha.20">v1.11.0-alpha.20</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -310,8 +338,18 @@ $uiVersion = getUiVersion();
 
 <script>
 let selectedSingboxVersion = 'v1.11.0-alpha.6';  
-
 let selectedMihomoVersion = 'stable';  
+let selectedLanguage = 'cn';  
+
+function showUpdateVersionModal() {
+    $('#updateVersionModal').modal('show');  
+}
+
+function confirmUpdateVersion() {
+    selectedLanguage = document.getElementById('languageSelect').value;  
+    $('#updateVersionModal').modal('hide');  
+    selectOperation('client'); 
+}
 
 function showSingboxVersionSelector() {
     $('#optionsModal').modal('hide');  
@@ -374,6 +412,11 @@ function selectOperation(type) {
                 : 'update_mihomo_preview.php',  
             message: '开始下载 Mihomo 内核更新...',
             description: '正在更新 Mihomo 内核到最新版本 (' + selectedMihomoVersion + ')'
+        },
+        'client': {
+            url: 'update_script.php?lang=' + selectedLanguage,  
+            message: '开始下载客户端更新...',
+            description: '正在更新客户端到最新版本'
         }
     };
 
@@ -417,10 +460,6 @@ function initiateUpdate(url, logMessage, description) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('singboxOptionsButton').addEventListener('click', function() {
         $('#optionsModal').modal('show');
-    });
-
-    document.getElementById('updateButton').addEventListener('click', function() {
-        initiateUpdate('update_script.php', '开始下载客户端更新...', '正在更新客户端到最新版本');
     });
 
     document.getElementById('updateUiButton').addEventListener('click', function() {
