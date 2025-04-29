@@ -130,13 +130,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if version_ge_1_12_0 then
 			--https://sing-box.sagernet.org/migration/#migrate-outbound-domain-strategy-option-to-domain-resolver
 			result.domain_strategy = nil
-			if node.domain_strategy then
-				local domain_resolver = {
-					server = "direct",
-					strategy = node.domain_strategy
-				}
-				result.domain_resolver = domain_resolver
-			end
+			result.domain_resolver = {
+				server = "direct",
+				strategy = (node.domain_strategy and node.domain_strategy ~="") and node.domain_strategy or nil
+			}
 		end
 
 		local tls = nil
@@ -444,6 +441,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		end
 
+		if node.protocol == "anytls" then
+			protocol_table = {
+				password = (node.password and node.password ~= "") and node.password or "",
+				tls = tls
+			}
+		end
+
 		if protocol_table then
 			for key, value in pairs(protocol_table) do
 				result[key] = value
@@ -730,6 +734,18 @@ function gen_config_server(node)
 			},
 			ignore_client_bandwidth = (node.hysteria2_ignore_client_bandwidth == "1") and true or false,
 			tls = tls
+		}
+	end
+
+	if node.protocol == "anytls" then
+		protocol_table = {
+			users = {
+				{
+					name = (node.username and node.username ~= "") and node.username or "sekai",
+					password = node.password
+				}
+			},
+			tls = tls,
 		}
 	end
 
@@ -1762,6 +1778,27 @@ function gen_config(var)
 				strategy = "prefer_ipv6"
 			}
 			direct_outbound.domain_resolver = domain_resolver
+
+			-- 当没有 direct dns 服务器时添加 local
+			local hasDirect = false
+			if config.dns and config.dns.servers then
+				for _, server in ipairs(config.dns.servers) do
+					if server.tag == "direct" then
+						hasDirect = true
+						break
+					end
+				end
+			end
+			if not hasDirect then
+				config.dns = {
+					servers = {
+						{
+							type = "local",
+							tag = "direct"
+						}
+					},
+				}
+			end
 		end
 		table.insert(outbounds,direct_outbound)
 
